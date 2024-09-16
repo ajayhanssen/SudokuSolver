@@ -24,12 +24,14 @@ blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 # Apply Canny Edge Detection
 edges = cv2.Canny(blurred, 50, 150)
 
-# Find contours
+# Find contours on the image, second return value is the hierarchy ( which contours are inside which), not useful here
+# cv2.RETR_EXTERNAL retrieves only the outermost contours, cv2.CHAIN_APPROX_SIMPLE removes redundant points and only returns the endpoints of the contour
 contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-# Sort contours by area and keep the largest one
+# Sort contours by area, descending from biggest to smallest
 contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
+# iterate through all the contours, looking for one with four points (resulting in a rectangle, obviously)
 for contour in contours:
     # Approximate the contour to a polygon
     epsilon = 0.02 * cv2.arcLength(contour, True)
