@@ -3,7 +3,7 @@ import numpy as np
 
 
 # Load an image
-original_puzzle = cv2.imread('puzzles/puzzle_2.png')
+original_puzzle = cv2.imread('puzzles/puzzle_1_persp.jpeg')
 
 # Convert the image to grayscale
 gs_puzzle = cv2.cvtColor(original_puzzle, cv2.COLOR_BGR2GRAY)
