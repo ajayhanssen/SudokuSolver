@@ -51,14 +51,8 @@ def un_warp_sudoku(image):
     sudoku_contour = sudoku_contour.reshape(4, 2)
     rect = order_points(sudoku_contour)
 
-    # Get the width and height of the new warped image
-    width_a = np.linalg.norm(rect[2] - rect[3])
-    width_b = np.linalg.norm(rect[1] - rect[0])
-    max_width = max(int(width_a), int(width_b))
-
-    height_a = np.linalg.norm(rect[1] - rect[2])
-    height_b = np.linalg.norm(rect[0] - rect[3])
-    max_height = max(int(height_a), int(height_b))
+    max_width = 450
+    max_height = 450
 
     # Destination points for the unwarped image
     dst = np.array([
@@ -74,7 +68,7 @@ def un_warp_sudoku(image):
     return warped
 
 if __name__ == '__main__':
-    image = cv2.imread('puzzles/puzzle_1.png')
+    image = cv2.imread('puzzles/puzzle_1_persp.jpeg')
     unwarped = un_warp_sudoku(image)
     cv2.imshow('Unwarped Sudoku', unwarped)
     cv2.waitKey(0)
