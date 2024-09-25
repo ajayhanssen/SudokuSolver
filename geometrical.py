@@ -15,7 +15,6 @@ def order_points(pts):
     return rect
 
 def un_warp_sudoku(image):
-
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -25,14 +24,15 @@ def un_warp_sudoku(image):
     # Apply Canny Edge Detection
     edges = cv2.Canny(blurred, 50, 150)
 
-    # Find contours on the image, second return value is the hierarchy ( which contours are inside which), not useful here
-    # cv2.RETR_EXTERNAL retrieves only the outermost contours, cv2.CHAIN_APPROX_SIMPLE removes redundant points and only returns the endpoints of the contour
+    # Find contours on the image
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Sort contours by area, descending from biggest to smallest
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
-    # iterate through all the contours, looking for one with four points (resulting in a rectangle, obviously)
+    sudoku_contour = None
+
+    # Iterate through all the contours, looking for one with four points
     for contour in contours:
         # Approximate the contour to a polygon
         epsilon = 0.02 * cv2.arcLength(contour, True)
@@ -42,10 +42,10 @@ def un_warp_sudoku(image):
             sudoku_contour = approx
             break
 
-    #cv2.drawContours(image, [sudoku_contour], -1, (0, 255, 0), 3)
-    #cv2.imshow('Sudoku Contour', image)
-    #cv2.waitKey(0)
-
+    # If no contour was found, return None
+    if sudoku_contour is None:
+        print("No valid Sudoku contour found!")
+        return None
 
     # Order the Sudoku points
     sudoku_contour = sudoku_contour.reshape(4, 2)
@@ -70,6 +70,9 @@ def un_warp_sudoku(image):
 if __name__ == '__main__':
     image = cv2.imread('puzzles/puzzle_1_persp.jpeg')
     unwarped = un_warp_sudoku(image)
-    cv2.imshow('Unwarped Sudoku', unwarped)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if unwarped is not None:
+        cv2.imshow('Unwarped Sudoku', unwarped)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    else:
+        print("Could not unwarp the image.")
