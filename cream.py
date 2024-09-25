@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
-from PIL import Image, ImageTk
+import ttkbootstrap as tb
+from ttkbootstrap.constants import *
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 import cv2
 
 from geometrical import *
@@ -8,12 +10,17 @@ from field_recognizer import *
 from solver import *
 
 LARGEFONT = ('Verdana', 20)
-
-class SudokoSolverApp(tk.Tk):
+TEXTFONT = ImageFont.truetype("arial.ttf", 20)  # Define a font object for PIL drawing (replace with a valid font path
+original_field = None
+class SudokuSolverApp(tb.Window):  # Inherit from ttkbootstrap.Window for theme support
 
     def __init__(self, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.title('Sudoku Solver')
+        self.geometry('1250x1250')  # Set a fixed window size
+        self.resizable(False, False)  # Disable window resizing
+        self.themename = "solar"  # Set the theme to Solar
+
 
         container = ttk.Frame(self)
         container.pack(side='top', fill='both', expand=True)
@@ -36,65 +43,105 @@ class SudokoSolverApp(tk.Tk):
 class MainPage(ttk.Frame):
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        super().__init__(parent)
+        self.controller = controller
+
+        # Configure grid layout for the main frame
+        self.grid_columnconfigure(0, weight=1)  # Center alignment for elements
+        self.grid_columnconfigure(1, weight=1)  # Equal space for left and right buttons
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_rowconfigure(0, weight=1)  # Center alignment for elements
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
+
+        # Main title
         label = ttk.Label(self, text='SudokuSolver', font=LARGEFONT)
-        label.pack(pady=10, padx=10)
+        label.grid(row=0, column=1, pady=(50, 20), padx=10)  # Positioned at the top center
 
+        # Camera button on the left
         cam_button = ttk.Button(self, text='Camera', command=lambda: controller.show_frame(CamPage))
-        cam_button.pack(fill=tk.BOTH, expand=tk.TRUE)
+        cam_button.grid(row=1, column=0, sticky='e', padx=(20, 10), ipadx=20, ipady=10)  # Positioned on the left
 
+        # Load Image button on the right
         load_button = ttk.Button(self, text='Load Image', command=lambda: controller.show_frame(LoadPage))
-        load_button.pack(fill=tk.BOTH, expand=tk.TRUE)
+        load_button.grid(row=1, column=2, sticky='w', padx=(10, 20), ipadx=20, ipady=10)  # Positioned on the right
 
+        # Exit button in the bottom center
+        exit_button = ttk.Button(self, text='Exit', command=self.controller.quit)
+        exit_button.grid(row=2, column=1, pady=(10, 20), ipadx=20, ipady=10)  # Positioned at the bottom center
+
+        # Credits label at the very bottom center
         credits = ttk.Label(self, text='Made by: Thöni, Unterhuber, Peer', font=('Verdana', 7))
-        credits.pack(pady=10, padx=10, side=tk.LEFT)
+        credits.grid(row=3, column=1, pady=(10, 30), sticky='s')  # Positioned at the bottom center
+
+
 
 class CamPage(ttk.Frame):
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        super().__init__(parent)
         self.controller = controller
         self.cap = cv2.VideoCapture(0)  # Initialize the camera
 
+        # Main title
         label = ttk.Label(self, text='Camera Page', font=('Helvetica', 18, 'bold'))
-        label.pack(pady=10, padx=10)
+        label.pack(pady=20, padx=20)  # Increased padding for the title
 
         # Left frame for video and recognition results
         left_frame = ttk.Frame(self)
-        left_frame.pack(side=tk.LEFT, padx=10, pady=10, anchor='nw')  # Anchor to top-left (north-west)
+        left_frame.pack(side=tk.LEFT, padx=30, pady=30, anchor='nw')  # Increased padding around left frame
+        left_frame.grid_columnconfigure(0, weight=1)  # Center alignment for elements in left frame
+
+        try:
+            placeholder_image = Image.open("SudokuSolver\\placeholder.jpg")  # Load the placeholder image
+            placeholder_image = placeholder_image.resize((350, 350))  # Resize placeholder image to match
+            empty_photo = ImageTk.PhotoImage(placeholder_image)  # Convert to ImageTk
+        except Exception as e:
+            print(f"Error loading placeholder image: {e}")
+            # If loading fails, create a blank image instead
+            empty_image = Image.new('RGB', (350, 350), (240, 240, 240))  # Blank image (gray background)
+            empty_photo = ImageTk.PhotoImage(empty_image)
 
         # Video output at the top left
-        self.video_label = ttk.Label(left_frame)
-        self.video_label.pack()
+        self.video_label = ttk.Label(left_frame, relief=tk.SUNKEN, image=empty_photo)  # Use placeholder image
+        self.video_label.image = empty_photo  # Keep reference to avoid garbage collection
+        self.video_label.grid(row=0, column=0, padx=10, pady=10)
 
         # "Scan" button below the video output
         scan_button = ttk.Button(left_frame, text='Scan', command=self.scan)
-        scan_button.pack(pady=5)
+        scan_button.grid(row=1, column=0, pady=5)
 
         # Output for recognized field below the scan button
-        self.placeholder1 = ttk.Label(left_frame, text="Recognized field output here", relief=tk.SUNKEN)
-        self.placeholder1.pack(pady=10)
+        self.placeholder1 = ttk.Label(left_frame, text="Recognized field output here", relief=tk.SUNKEN,
+                                      image=empty_photo)  # Use placeholder image as initial placeholder
+        self.placeholder1.image = empty_photo  # Keep reference to avoid garbage collection
+        self.placeholder1.grid(row=2, column=0, pady=10)
 
-        # "Solve" button below the recognized field output
-        solve_button = ttk.Button(left_frame, text='Solve', command=self.solve)
-        solve_button.pack(pady=5)
+        # "Solve recognized puzzle" button below the recognized field output
+        solve_recognized_button = ttk.Button(left_frame, text='Solve recognized puzzle', command=self.solve)
+        solve_recognized_button.grid(row=3, column=0, pady=5)
 
         # Right frame for solved matrix output
         right_frame = ttk.Frame(self)
-        right_frame.pack(side=tk.RIGHT, padx=10, pady=10, anchor='ne')  # Anchor to top-right (north-east)
+        right_frame.pack(side=tk.RIGHT, padx=30, pady=30, anchor='ne')  # Increased padding around right frame
+        right_frame.grid_columnconfigure(0, weight=1)  # Center alignment for elements in right frame
 
         # Placeholder2 for solved matrix output
-        self.placeholder2 = ttk.Label(right_frame, text="Solved matrix will appear here", relief=tk.SUNKEN)
-        self.placeholder2.pack(pady=10, padx=10)
+        self.placeholder2 = ttk.Label(right_frame, text="Solved matrix will appear here", relief=tk.SUNKEN,
+                                      image=empty_photo)  # Use placeholder image as initial placeholder
+        self.placeholder2.image = empty_photo  # Keep reference to avoid garbage collection
+        self.placeholder2.grid(row=0, column=0, pady=10, padx=10)
 
-        # Bottom frame for back button
+        # Bottom frame for navigation buttons
         bottom_frame = ttk.Frame(self)
-        bottom_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=10, anchor='se')  # Anchor to bottom-right (south-east)
+        bottom_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=20)  # Padding around the bottom frame
 
-        # "Back" button at the bottom-right corner
-        back_button = ttk.Button(bottom_frame, text='Back', command=lambda: controller.show_frame(MainPage))
-        back_button.pack(side=tk.RIGHT, padx=10, pady=10)
+        # "Back to Main Screen" button at the bottom-right corner
+        back_button = ttk.Button(bottom_frame, text='Back to Main Screen', command=lambda: controller.show_frame(MainPage))
+        back_button.pack(side=tk.LEFT, padx=10, pady=10)  # Positioned to the right with padding
 
+        # Update frame
         self.update_frame()
 
     def update_frame(self):
@@ -109,23 +156,20 @@ class CamPage(ttk.Frame):
         self.after(25, self.update_frame)  # Update every 25 ms
 
     def scan(self):
-    # Capture the current frame
+        # Capture the current frame
         ret, frame = self.cap.read()
         if ret:
-        # Convert the frame to RGB format
+            # Convert the frame to RGB format
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
         try:
             # Attempt to unwarp the Sudoku image
             self.unwarped = un_warp_sudoku(frame)
-
             
             # Check if the result is None or a valid image
             if self.unwarped is None:
                 print("Unwarp failed. Please check the image or contour detection.")
                 return
-            
-
             
             # Convert to PIL Image object
             img = Image.fromarray(self.unwarped)
@@ -134,18 +178,17 @@ class CamPage(ttk.Frame):
             print(f"Image mode: {img.mode}, size: {img.size}")
             
             # Resize the image for display
-            img = img.resize((300, 300))
+            img = img.resize((350, 350))
             
             # Create a PhotoImage object for display
             imgtk = ImageTk.PhotoImage(image=img)
 
             # Display the image in the placeholders
-            #scanned sudoku
+            # Scanned sudoku
             self.placeholder1.imgtk = imgtk
             self.placeholder1.configure(image=imgtk)
 
-
-            #matrix output
+            # Matrix output (Initial recognized field without solving)
             self.placeholder2.imgtk = imgtk
             self.placeholder2.configure(image=imgtk)
 
@@ -154,32 +197,64 @@ class CamPage(ttk.Frame):
         else:
             print("Failed to capture frame from the camera.")
 
-
     def solve(self):
-        # Your solve logic here
-        field =  construct_board(self.unwarped)
-        if solve(field):
-            print("Solved!")
-            print(field)
-        else:
-            print("No solution exists") 
+        try:
+            # Solve the Sudoku
+            field = construct_board(self.unwarped)
+            original_field = field
+            if not solve(field):
+                print("No solution exists")
+                return
 
+            # Convert recognized field to an image
+            recognized_img = Image.fromarray(self.unwarped)
+            recognized_img = recognized_img.resize((350, 350))
+
+            # Create a transparent overlay image
+            overlay = Image.new('RGBA', (350, 350), (255, 255, 255, 0))
+
+            # Draw the solved numbers onto the overlay image
+            draw = ImageDraw.Draw(overlay)
+            for i in range(9):
+                for j in range(9):
+                    if field[i][j] != 0 and not self.is_original_number(i, j):
+                        # Draw the solved number
+                        draw.text((j * 38 + 10, i * 38 + 5), str(field[i][j]), fill=(255, 0, 0, 255), font=LARGEFONT)
+            
+            # Combine the recognized field with the transparent overlay
+            combined = Image.alpha_composite(recognized_img.convert('RGBA'), overlay)
+
+            # Display the combined image in the second placeholder
+            imgtk = ImageTk.PhotoImage(image=combined)
+            self.placeholder2.imgtk = imgtk
+            self.placeholder2.configure(image=imgtk)
+
+        except Exception as e:
+            print(f"Error solving the Sudoku: {e}")
+
+    def is_original_number(self, row, col):
+        # Logic to determine if the number is part of the original puzzle
+        # You need to implement this method based on your application logic
+        # For now, let's assume all original numbers are non-zero in self.unwarped
+        # This is a placeholder method and should be replaced with actual logic.
+        return original_field[row][col] != 0
 
     def __del__(self):
         if self.cap.isOpened():
             self.cap.release()
 
+
 class LoadPage(ttk.Frame):
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text='Load Image Page', font=LARGEFONT)
+        super().__init__(parent)
+        label = ttk.Label(self, text='Load Image Page', font=('Helvetica', 18, 'bold'))
         label.pack(pady=10, padx=10)
 
-        back_button = ttk.Button(self, text='Back', command=lambda: controller.show_frame(MainPage))
-        back_button.pack(fill=tk.BOTH, expand=tk.TRUE)
+        # Add your components and logic for this page
 
 
-if __name__ == '__main__':
-    app = SudokoSolverApp()
+if __name__ == "__main__":
+    app = SudokuSolverApp()
+
     app.mainloop()
