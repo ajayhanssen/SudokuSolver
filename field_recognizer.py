@@ -13,8 +13,9 @@ def construct_board(image):
 
     _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
 
-    cv2.imshow('gray', gray)
-    cv2.waitKey(0)
+    #DEBUG
+    #cv2.imshow('gray', gray)
+    #cv2.waitKey(0)
 
 
     # 2. Split the Sudoku grid into 81 cells

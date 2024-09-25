@@ -19,8 +19,8 @@ class SudokuSolverApp(tb.Window):  # Inherit from ttkbootstrap.Window for theme 
         self.title('Sudoku Solver')
         self.geometry('1250x1250')  # Set a fixed window size
         self.resizable(False, False)  # Disable window resizing
-        self.themename = "solar"  # Set the theme to Solar
-
+        self.themename = kwargs.pop("themename", "solar")  # Set default theme to 'solar' if not provided
+        self.style.theme_use(self.themename)  # Apply the selected theme
 
         container = ttk.Frame(self)
         container.pack(side='top', fill='both', expand=True)
@@ -103,10 +103,17 @@ class CamPage(ttk.Frame):
             empty_image = Image.new('RGB', (350, 350), (240, 240, 240))  # Blank image (gray background)
             empty_photo = ImageTk.PhotoImage(empty_image)
 
+        self.empty_photo = empty_photo  # Store placeholder image for reuse
+
         # Video output at the top left
         self.video_label = ttk.Label(left_frame, relief=tk.SUNKEN, image=empty_photo)  # Use placeholder image
         self.video_label.image = empty_photo  # Keep reference to avoid garbage collection
         self.video_label.grid(row=0, column=0, padx=10, pady=10)
+
+        # "No Cam detected" label, hidden initially
+        #self.no_cam_label = ttk.Label(left_frame, text="No Camera", font=('Helvetica', 14, 'bold'), foreground='red')
+        #self.no_cam_label.grid(row=0, column=0, padx=10, pady=10)
+        #self.no_cam_label.place_forget()  # Hide the label initially
 
         # "Scan" button below the video output
         scan_button = ttk.Button(left_frame, text='Scan', command=self.scan)
@@ -147,12 +154,21 @@ class CamPage(ttk.Frame):
     def update_frame(self):
         ret, frame = self.cap.read()
         if ret:
+            # Hide the "No Cam detected" label if the camera is working
+            #self.no_cam_label.place_forget()
+            
+            # Convert frame for displaying in Tkinter
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = cv2.resize(frame, (320, 240))
             img = Image.fromarray(frame)
             imgtk = ImageTk.PhotoImage(image=img)
             self.video_label.imgtk = imgtk
             self.video_label.configure(image=imgtk)
+        else:
+            # Show the "No Cam detected" label and display the placeholder
+            self.video_label.configure(image=self.empty_photo)
+            #self.no_cam_label.place(x=80, y=100)  # Adjust coordinates as needed to center the text
+
         self.after(25, self.update_frame)  # Update every 25 ms
 
     def scan(self):
@@ -165,6 +181,7 @@ class CamPage(ttk.Frame):
         try:
             # Attempt to unwarp the Sudoku image
             self.unwarped = un_warp_sudoku(frame)
+            #cv2.imshow(self.unwarped)
             
             # Check if the result is None or a valid image
             if self.unwarped is None:
@@ -201,6 +218,7 @@ class CamPage(ttk.Frame):
         try:
             # Solve the Sudoku
             field = construct_board(self.unwarped)
+            print(field)
             original_field = field
             if not solve(field):
                 print("No solution exists")
@@ -242,6 +260,7 @@ class CamPage(ttk.Frame):
     def __del__(self):
         if self.cap.isOpened():
             self.cap.release()
+
 
 
 class LoadPage(ttk.Frame):
