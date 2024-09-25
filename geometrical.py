@@ -65,7 +65,7 @@ def un_warp_sudoku(image):
     matrix = cv2.getPerspectiveTransform(rect, dst)
     warped = cv2.warpPerspective(image, matrix, (max_width, max_height))
 
-    cv2.imshow('Warped Sudoku', warped)
+    #cv2.imshow('Warped Sudoku', warped)
 
     return warped
 
