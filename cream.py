@@ -18,7 +18,7 @@ class SudokuSolverApp(tb.Window):  # Inherit from ttkbootstrap.Window for theme 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title('Sudoku Solver')
-        self.geometry('1250x1250')  # Set a fixed window size
+        self.geometry('1000x1000')  # Set a fixed window size
         self.resizable(False, False)  # Disable window resizing
         self.themename = kwargs.pop("themename", "solar")  # Set default theme to 'solar' if not provided
         self.style.theme_use(self.themename)  # Apply the selected theme
@@ -140,7 +140,7 @@ class CamPage(ttk.Frame):
         bottom_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=20, pady=20)  # Padding around the bottom frame
 
         # "Back to Main Screen" button at the bottom-right corner
-        back_button = ttk.Button(bottom_frame, text='Back to Main Screen', command=lambda: controller.show_frame(MainPage))
+        back_button = ttk.Button(bottom_frame, text='Home', command=lambda: controller.show_frame(MainPage))
         back_button.pack(side=tk.LEFT, padx=10, pady=10)  # Positioned to the right with padding
 
         # Update frame
@@ -221,14 +221,17 @@ class CamPage(ttk.Frame):
             # Create a transparent overlay image
             overlay = Image.new('RGBA', (350, 350), (255, 255, 255, 0))
 
+            # Increase the font size for bigger numbers
+            bigger_text_font = ImageFont.truetype("arial.ttf", 25)  # Increase the font size to 25
+
             # Draw the solved numbers onto the overlay image
             draw = ImageDraw.Draw(overlay)
             for i in range(9):
                 for j in range(9):
                     if field[i][j] != 0 and not self.is_original_number(i, j):
-                        # Draw the solved number
-                        draw.text((j * 38 + 10, i * 38 + 5), str(field[i][j]), fill=(255, 0, 0, 255), font=TEXTFONT)
-            
+                        # Ensure numbers are cast to integers and drawn bigger
+                        draw.text((j * 38 + 10, i * 38 + 5), str(int(field[i][j])), fill=(255, 0, 0, 255), font=bigger_text_font)
+
             # Combine the recognized field with the transparent overlay
             combined = Image.alpha_composite(recognized_img.convert('RGBA'), overlay)
 
@@ -239,6 +242,7 @@ class CamPage(ttk.Frame):
 
         except Exception as e:
             print(f"Error solving the Sudoku: {e}")
+
 
     def is_original_number(self, row, col):
         # Check if original_field is set and not None
@@ -269,8 +273,12 @@ class LoadPage(ttk.Frame):
         self.image_label = ttk.Label(self, text='No Image Loaded', relief=tk.SUNKEN)
         self.image_label.pack(pady=10, padx=10)
 
+        # Recognize button
+        recognize_button = ttk.Button(self, text='Recognize Puzzle', command=self.recognize_puzzle)
+        recognize_button.pack(pady=10)
+
         # Solve button
-        solve_button = ttk.Button(self, text='Recognize &Solve Loaded Puzzle', command=self.solve_loaded_puzzle)
+        solve_button = ttk.Button(self, text='Solve Puzzle', command=self.solve_puzzle)
         solve_button.pack(pady=10)
 
         # Back button
@@ -295,7 +303,7 @@ class LoadPage(ttk.Frame):
             except Exception as e:
                 print(f"Error loading image: {e}")
 
-    def solve_loaded_puzzle(self):
+    def recognize_puzzle(self):
         try:
             # Ensure an image is loaded
             if not hasattr(self, 'loaded_image'):
@@ -304,7 +312,7 @@ class LoadPage(ttk.Frame):
 
             # Convert loaded image to numpy array
             img_array = np.array(self.loaded_image.convert('RGB'))
-            
+
             # Process the loaded image to recognize Sudoku puzzle
             self.unwarped = un_warp_sudoku(img_array)
             if self.unwarped is None:
@@ -317,14 +325,65 @@ class LoadPage(ttk.Frame):
             img_tk = ImageTk.PhotoImage(img)
             self.image_label.configure(image=img_tk)
             self.image_label.image = img_tk  # Keep reference to avoid garbage collection
-            field = construct_board(self.unwarped)
-            print(field)
-            solve(field)
-            print("Solved:")
-            print(field)
+
+            print("Puzzle recognized successfully.")
 
         except Exception as e:
-            print(f"Error processing loaded puzzle: {e}")
+            print(f"Error recognizing puzzle: {e}")
+
+    def solve_puzzle(self):
+        global original_field  # Use the global variable
+        try:
+            # Ensure the puzzle has been recognized before solving
+            if not hasattr(self, 'unwarped'):
+                print("No puzzle recognized to solve")
+                return
+
+            # Construct the Sudoku board from the recognized puzzle
+            field = construct_board(self.unwarped)
+            original_field = field.copy()  # Save a copy of the original field
+
+            if not solve(field):
+                print("No solution exists")
+                return
+
+            # Convert recognized field to an image
+            recognized_img = Image.fromarray(self.unwarped)
+            recognized_img = recognized_img.resize((350, 350))
+
+            # Create a transparent overlay image
+            overlay = Image.new('RGBA', (350, 350), (255, 255, 255, 0))
+
+            # Increase the font size for bigger numbers
+            bigger_text_font = ImageFont.truetype("arial.ttf", 25)  # Increase the font size to 25
+
+            # Draw the solved numbers onto the overlay image
+            draw = ImageDraw.Draw(overlay)
+            for i in range(9):
+                for j in range(9):
+                    if field[i][j] != 0 and not self.is_original_number(i, j):
+                        # Ensure numbers are cast to integers and drawn bigger
+                        draw.text((j * 38 + 15, i * 38 + 10), str(int(field[i][j])), fill=(255, 0, 0, 255), font=bigger_text_font)
+
+            # Combine the recognized field with the transparent overlay
+            combined = Image.alpha_composite(recognized_img.convert('RGBA'), overlay)
+
+            # Display the combined image in the image_label
+            imgtk = ImageTk.PhotoImage(image=combined)
+            self.image_label.imgtk = imgtk
+            self.image_label.configure(image=imgtk)
+
+            print("Sudoku solved and overlay applied.")
+
+        except Exception as e:
+            print(f"Error solving the Sudoku: {e}")
+
+    def is_original_number(self, row, col):
+        # Check if original_field is set and not None
+        if original_field is not None:
+            # Logic to determine if the number is part of the original puzzle
+            return original_field[row][col] != 0
+        return False
 
 if __name__ == "__main__":
     app = SudokuSolverApp()
