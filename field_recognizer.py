@@ -44,7 +44,7 @@ def construct_board(image):
             cell = binary[start_row:end_row, start_col:end_col]
 
             cells.append(cell)
-            cv2.imwrite(f'cells/cell_{i}_{j}.png', cell)
+            #cv2.imwrite(f'cells/cell_{i}_{j}.png', cell)
 
     
     board = np.zeros((9, 9))
