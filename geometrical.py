@@ -63,11 +63,35 @@ def un_warp_sudoku(image):
 
     # Compute the perspective transform matrix and apply it
     matrix = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, matrix, (max_width, max_height))
+    unwarped = cv2.warpPerspective(image, matrix, (max_width, max_height))
 
-    #cv2.imshow('Warped Sudoku', warped)
 
-    return warped
+    """ Save images for documentation purposes
+
+    blurredrescaled = cv2.resize(blurred, (450, 450), interpolation=cv2.INTER_AREA)
+    cannyrescaled = cv2.resize(edges, (450, 450), interpolation=cv2.INTER_AREA)
+    imgwithcontours = cv2.drawContours(image, [sudoku_contour], -1, (0, 255, 0), 2)
+    imgwithcontours = cv2.resize(imgwithcontours, (450, 450), interpolation=cv2.INTER_AREA)
+
+    # draw nmbers 1, 2, 3, 4 on the edges of image, clockwise
+    cv2.putText(imgwithcontours, '1', (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    cv2.putText(imgwithcontours, '2', (430, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    cv2.putText(imgwithcontours, '3', (430, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    cv2.putText(imgwithcontours, '4', (5, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+    # draw numbers on the corners of the contour clockwise
+    cv2.putText(imgwithcontours, '1', (80, 67), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    cv2.putText(imgwithcontours, '2', (403, 63), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    cv2.putText(imgwithcontours, '3', (382, 356), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+    cv2.putText(imgwithcontours, '4', (87, 378), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+    cv2.imwrite('progression/1_blurred.jpg', blurredrescaled)
+    cv2.imwrite('progression/2_canny.jpg', cannyrescaled)
+    cv2.imwrite('progression/3_contours.jpg', imgwithcontours)
+    cv2.imwrite('progression/4_unwarped.jpg', unwarped)
+    """
+
+    return unwarped
 
 if __name__ == '__main__':
     image = cv2.imread('puzzles/puzzle_1_persp.jpeg')
