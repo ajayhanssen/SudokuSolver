@@ -19,6 +19,14 @@ def un_warp_sudoku(image):
     # Convert the image to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # what if box blurring is used instead of gaussian?
+    boxblurred = cv2.boxFilter(gray, -1, (5, 5))
+    cv2.imwrite('presentation/2_boxblurred.jpg', boxblurred)
+
+    # what if bilateral blurring is used instead of gaussian?
+    bilateralblurred = cv2.bilateralFilter(gray, 5, 75, 75)
+    cv2.imwrite('presentation/3_bilateralblurred.jpg', bilateralblurred)
+
     # Apply GaussianBlur to reduce noise
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
