@@ -5,6 +5,7 @@ from field_recognizer import *
 from solver import *
 
 image = cv2.imread('puzzles/puzzle_1_persp.jpeg')
+image = cv2.imread('puzzles/80512422-w-640.jpg')
 
 cv2.imshow('Original Image', image)
 cv2.waitKey(0)

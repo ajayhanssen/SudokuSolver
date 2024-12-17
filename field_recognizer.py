@@ -17,7 +17,6 @@ def construct_board(image):
     #cv2.imshow('gray', gray)
     #cv2.waitKey(0)
 
-
     # 2. Split the Sudoku grid into 81 cells
     board_size = 450
     cell_size = board_size // 9 # Each cell size (since it's 9x9)
@@ -66,6 +65,7 @@ if __name__ == '__main__':
 
     # read the image
     image = cv2.imread('puzzles/puzzle_1_persp.jpeg')
+    image = cv2.imread('puzzles/80512422-w-640.jpg')
 
     # de-warp the image
     image = un_warp_sudoku(image)
