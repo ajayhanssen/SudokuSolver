@@ -24,6 +24,7 @@ def construct_board(image):
     # Define a margin to remove the cell borders
     margin = 5
     cells = []
+    gray_cells = []
     for i in range(9):
         for j in range(9):
             
@@ -43,9 +44,12 @@ def construct_board(image):
             cell = binary[start_row:end_row, start_col:end_col]
 
             cells.append(cell)
+            gray_cells.append(gray[start_row:end_row, start_col:end_col])
             #cv2.imwrite(f'cells/cell_{i}_{j}.png', cell)
 
-    
+    # Documentation image
+    cv2.imwrite('cells/morph.png', np.hstack((gray_cells[80], cells[80])))
+
     board = np.zeros((9, 9))
     valid = ['1\n', '2\n', '3\n', '4\n', '5\n', '6\n', '7\n', '8\n', '9\n']
 
