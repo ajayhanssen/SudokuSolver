@@ -6,12 +6,19 @@ import pytesseract
 
 def construct_board(image):
     # Convert to grayscale
+    cv2.imwrite('presentation/samu/1_original.jpg', image)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    cv2.imwrite('presentation/samu/2_grayscale.jpg', gray)
 
     # Apply Gaussian blur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
+    cv2.imwrite('presentation/samu/3_blurred.jpg', blurred)
+
     _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+
+    cv2.imwrite('presentation/samu/4_binarized.jpg', binary)
 
     #DEBUG
     #cv2.imshow('gray', gray)
@@ -45,7 +52,7 @@ def construct_board(image):
 
             cells.append(cell)
             gray_cells.append(gray[start_row:end_row, start_col:end_col])
-            #cv2.imwrite(f'cells/cell_{i}_{j}.png', cell)
+            cv2.imwrite(f'presentation/samu/tiles/cell_{i}_{j}.png', cell)
 
     # Documentation image
     cv2.imwrite('cells/morph.png', np.hstack((gray_cells[80], cells[80])))
@@ -69,7 +76,7 @@ if __name__ == '__main__':
 
     # read the image
     image = cv2.imread('puzzles/puzzle_1_persp.jpeg')
-    image = cv2.imread('puzzles/80512422-w-640.jpg')
+    #image = cv2.imread('puzzles/80512422-w-640.jpg')
 
     # de-warp the image
     image = un_warp_sudoku(image)
