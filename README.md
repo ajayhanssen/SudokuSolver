@@ -2,6 +2,17 @@
 
 SudokuSolver is an advanced Python-based application for recognizing and solving Sudoku puzzles. It combines computer vision techniques, optical character recognition (OCR), and algorithmic problem-solving to deliver an end-to-end solution for Sudoku puzzles.
 
+## Quick file overview
+Run each of these fiels to run example usage.
+- **app.py**:
+  - Main file, combining all the scripts below. Contains the GUI.
+- **geometrical.py**:
+  - Detects sudoku puzzle and de-warps it.
+- **field_recognizer.py**:
+  - Splits grid into cells and uses OCR to detect the numbers.
+- **solver.py**:
+  - Contains solving algorithm to solve any (solvable) sudoku puzzle
+
 ## Features
 
 - **Computer Vision for Puzzle Recognition**:
@@ -32,4 +43,4 @@ The following dependencies are required to run the project:
 
 Install them via pip:
 ```bash
-pip install numpy opencv-python pytesseract ttkbootstrap pillow
+pip install requirements.txt
